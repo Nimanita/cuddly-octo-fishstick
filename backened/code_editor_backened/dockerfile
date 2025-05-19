@@ -1,28 +1,38 @@
 # Use a lightweight Python image
 FROM python:3.10-slim
 
-# Ensure output is unbuffered
+# Ensure output is unbuffered for Render logs
 ENV PYTHONUNBUFFERED=1
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies: build-essential, gcc, g++, and Node.js
+# Install system dependencies with cleanup in the same layer to reduce image size
 RUN apt-get update && \
-    apt-get install -y util-linux build-essential gcc g++ python3-dev curl pkg-config && \
+    apt-get install -y --no-install-recommends \
+    util-linux build-essential gcc g++ python3-dev curl pkg-config && \
     curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
-    apt-get install -y nodejs && \
+    apt-get install -y --no-install-recommends nodejs && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file first
 COPY backened/code_editor_backened/requirements.txt /app/requirements.txt
 
-# Install Python dependencies
+# Create a virtual environment and install Python dependencies
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies with special handling for zoneinfo
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
+    # Handle backports.zoneinfo differently since it's included in Python 3.10
+    pip install setuptools wheel && \
+    # Edit requirements to handle problematic packages
+    grep -v "backports.zoneinfo" requirements.txt > requirements_filtered.txt || cp requirements.txt requirements_filtered.txt && \
+    pip install -r requirements_filtered.txt && \
     pip install whitenoise daphne
 
-# Copy the backend code to the appropriate location
+# Copy the backend code
 COPY backened/code_editor_backened /app/
 
 # Copy frontend code
@@ -38,20 +48,14 @@ RUN npm run build
 # Move back to the Django project root
 WORKDIR /app
 
-# Create a directory for serving static files
+# Create necessary directories
 RUN mkdir -p staticfiles
-
-# Create a directory for frontend build if it doesn't exist
-RUN mkdir -p frontend/build
-
-# Move the built frontend to where Django can serve it
-RUN cp -r frontend/build /app/frontend/build
 
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Expose the port
+# Expose the port Render will use
 EXPOSE 8000
 
-# Start the server with Daphne
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "code_editor_backened.asgi:application"]
+# Start command - add options suitable for Render
+CMD ["daphne", "-b", "0.0.0.0", "-p", "$PORT", "code_editor_backened.asgi:application"]
