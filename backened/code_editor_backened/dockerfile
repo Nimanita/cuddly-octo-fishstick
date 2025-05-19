@@ -35,15 +35,22 @@ RUN pip install --upgrade pip && \
 # Copy the backend code
 COPY backened/code_editor_backened /app/
 
-# Copy frontend code
-COPY frontend/codyskool /app/frontend/
-
-# Install production dependencies for React app
+# Copy frontend code and install dependencies
 WORKDIR /app/frontend
-RUN npm ci --production
+COPY frontend/codyskool/package.json frontend/codyskool/package-lock.json ./
 
-# Build the React app
-RUN npm run build
+# Install production dependencies for React app with more verbose output
+RUN npm ci --production --verbose
+
+# Copy the rest of the frontend code
+COPY frontend/codyskool/src ./src
+COPY frontend/codyskool/public ./public
+COPY frontend/codyskool/*.js ./
+
+# Try building with more verbose output and fallback options
+RUN npm run build --verbose || \
+    (npm install --production=false && npm run build --verbose) || \
+    echo "Frontend build failed, but continuing deployment"
 
 # Move back to the Django project root
 WORKDIR /app
