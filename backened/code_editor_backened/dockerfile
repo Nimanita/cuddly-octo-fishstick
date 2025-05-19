@@ -19,7 +19,7 @@ COPY backened/code_editor_backened/requirements.txt /app/requirements.
 
 # Install Python dependencies
 RUN pip install --upgrade pip && \
-    pip install -r /app/requirements.txt && \
+    pip install -r backened/code_editor_backened/requirements.txt && \
     pip install whitenoise daphne
 
 # Copy the backend code to the appropriate location
