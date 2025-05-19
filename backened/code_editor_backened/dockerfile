@@ -9,13 +9,15 @@ WORKDIR /app
 
 # Install system dependencies: build-essential, gcc, g++, and Node.js
 RUN apt-get update && \
-    apt-get install -y util-linux build-essential gcc g++ python3-dev curl && \
+    apt-get install -y util-linux build-essential gcc g++ python3-dev curl pkg-config && \
     curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy the Django backend requirements first
-COPY backened/code_editor_backened/requirements.txt /app/requirements.txt
+# Copy the Django backend requirements first, but modify to avoid mysqlclient
+COPY backened/code_editor_backened/requirements.txt /app/requirements.
+
+# Install Python dependencies
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt && \
     pip install whitenoise daphne

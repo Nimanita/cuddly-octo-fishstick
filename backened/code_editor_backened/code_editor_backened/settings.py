@@ -67,15 +67,8 @@ ASGI_APPLICATION = 'code_editor_backened.asgi:application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'code_editor',
-        'USER': 'admin1',
-        'PASSWORD': 'Admin1$Pass',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',  # Use in-memory SQLite if you need Django models but no persistence
     }
 }
 
