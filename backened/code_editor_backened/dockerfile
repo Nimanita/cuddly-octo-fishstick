@@ -14,17 +14,17 @@ RUN apt-get update && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Explicitly list and verify directory contents for debugging
-RUN ls -la
-
-# Copy only the requirements file first
-COPY ./requirements.txt /app/requirements.txt
+# Copy the Django backend requirements first
+COPY backened/code_editor_backened/requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip && \
-    pip install -r /app/requirements.txt && \
+    pip install -r requirements.txt && \
     pip install whitenoise daphne
 
-# Copy the Django application code
-COPY . /app/
+# Copy the backend code to the appropriate location
+COPY backened/code_editor_backened /app/
+
+# Copy frontend code
+COPY frontend/codyskool /app/frontend/
 
 # Install production dependencies for React app
 WORKDIR /app/frontend
@@ -35,6 +35,15 @@ RUN npm run build
 
 # Move back to the Django project root
 WORKDIR /app
+
+# Create a directory for serving static files
+RUN mkdir -p staticfiles
+
+# Create a directory for frontend build if it doesn't exist
+RUN mkdir -p frontend/build
+
+# Move the built frontend to where Django can serve it
+RUN cp -r frontend/build /app/frontend/build
 
 # Collect static files
 RUN python manage.py collectstatic --noinput
