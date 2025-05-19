@@ -1,68 +1,53 @@
-# Use a lightweight Python image
-FROM python:3.10-slim
+# ==== Stage 1: Build the React frontend ====
+FROM node:18 AS frontend-build
+WORKDIR /app/frontend
 
-# Ensure output is unbuffered for Render logs
+# Copy package files and install dependencies
+COPY frontend/codyskool/package*.json ./
+RUN npm ci
+
+# Copy the rest of the frontend source code including tailwind.config.js, postcss.config.js and all assets
+COPY frontend/codyskool/ ./
+
+# Build the production version of your React app
+RUN npm run build --verbose
+
+# ==== Stage 2: Build the Django backend ====
+FROM python:3.10-slim
 ENV PYTHONUNBUFFERED=1
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies with cleanup in the same layer to reduce image size
+# Install system dependencies (you no longer need NodeJS here)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    util-linux build-essential gcc g++ python3-dev curl pkg-config && \
-    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
+      util-linux build-essential gcc g++ python3-dev curl pkg-config && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file first
+# Copy and install Python dependencies
 COPY backened/code_editor_backened/requirements.txt /app/requirements.txt
-
-# Create a virtual environment and install Python dependencies
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-
-# Install Python dependencies with special handling for zoneinfo
 RUN pip install --upgrade pip && \
-    # Handle backports.zoneinfo differently since it's included in Python 3.10
     pip install setuptools wheel && \
-    # Edit requirements to handle problematic packages
     grep -v "backports.zoneinfo" requirements.txt > requirements_filtered.txt || cp requirements.txt requirements_filtered.txt && \
     pip install -r requirements_filtered.txt && \
     pip install whitenoise daphne
 
-# Copy the backend code
+# Copy the Django app code into the image
 COPY backened/code_editor_backened /app/
 
-# Copy frontend code and install dependencies
-WORKDIR /app/frontend
-COPY frontend/codyskool/package.json frontend/codyskool/package-lock.json ./
+# Copy the pre-built React frontend from the previous stage
+# This places the built static files in the location referenced in settings.py
+COPY --from=frontend-build /app/frontend/codyskool/build /app/frontend/codyskool/build
 
-# Install production dependencies for React app with more verbose output
-RUN npm ci --production --verbose
+# Create directory for collected static files and run collectstatic
+RUN mkdir -p staticfiles && python manage.py collectstatic --noinput
 
-# Copy the rest of the frontend code
-COPY frontend/codyskool/src ./src
-COPY frontend/codyskool/public ./public
-COPY frontend/codyskool/*.js ./
-
-# Try building with more verbose output and fallback options
-RUN npm run build --verbose || \
-    (npm install --production=false && npm run build --verbose) || \
-    echo "Frontend build failed, but continuing deployment"
-
-# Move back to the Django project root
-WORKDIR /app
-
-# Create necessary directories
-RUN mkdir -p staticfiles
-
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
-# Expose the port Render will use
+# Expose the port Render uses; using shell form for variable expansion
 EXPOSE 8000
 
-# Start command - add options suitable for Render
-CMD ["daphne", "-b", "0.0.0.0", "-p", "$PORT", "code_editor_backened.asgi:application"]
+# Start the Daphne ASGI server using a shell for env variable interpolation.
+CMD sh -c 'daphne -b 0.0.0.0 -p ${PORT:-8000} code_editor_backened.asgi:application'
