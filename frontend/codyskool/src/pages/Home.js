@@ -29,7 +29,7 @@ export default function Home() {
     if (socketRef.current) {
       socketRef.current.close();
     }
-    const wsUrl = process.env.REACT_APP_WS_URL || `ws://localhost:8000/ws/interactive/`;
+    const wsUrl = process.env.REACT_APP_WS_URL || `wss://your-backend-url.onrender.com/ws/interactive/`;
     const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 
