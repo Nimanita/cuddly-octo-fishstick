@@ -1,32 +1,46 @@
-# Use a lightweight Python image.
+# Use a lightweight Python image
 FROM python:3.10-slim
 
-# Ensure output is unbuffered.
+# Ensure output is unbuffered
 ENV PYTHONUNBUFFERED=1
 
-# Set working directory.
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies: build-essential, gcc, g++, and Node.js (for JavaScript execution)
+# Install system dependencies: build-essential, gcc, g++, and Node.js
 RUN apt-get update && \
     apt-get install -y util-linux build-essential gcc g++ python3-dev curl && \
     curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
-    
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy application code.
-COPY . .
+# Explicitly list and verify directory contents for debugging
+RUN ls -la
 
-# (Optional) Collect static files if needed.
+# Copy only the requirements file first
+COPY ./requirements.txt /app/requirements.txt
+RUN pip install --upgrade pip && \
+    pip install -r /app/requirements.txt && \
+    pip install whitenoise daphne
+
+# Copy the Django application code
+COPY . /app/
+
+# Install production dependencies for React app
+WORKDIR /app/frontend
+RUN npm ci --production
+
+# Build the React app
+RUN npm run build
+
+# Move back to the Django project root
+WORKDIR /app
+
+# Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Expose the port.
+# Expose the port
 EXPOSE 8000
 
-# Start the server with Daphne.
+# Start the server with Daphne
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "code_editor_backened.asgi:application"]
-
-

@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+    'whitenoise.runserver_nostatic',
     # Third-party apps
     'rest_framework',
     'corsheaders',
@@ -41,6 +41,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'code_editor_backened.urls'
@@ -131,8 +132,14 @@ CORS_ALLOWED_ORIGINS = [
 MAX_EXECUTION_TIME = 10  # seconds
 MAX_MEMORY_USAGE = 100  # MB
 
-# Static files.
-STATIC_URL = '/static/'
+
+# Add React build directory as a static file directory
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'frontend/codyskool/build'),
+]
+
+# Configure whitenoise
+WHITENOISE_ROOT = os.path.join(BASE_DIR, 'frontend/codyskool/build')
 
 # Channels – using In-Memory channel layer for development. For production use Redis.
 CHANNEL_LAYERS = {
