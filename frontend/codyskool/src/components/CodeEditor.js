@@ -27,8 +27,7 @@ export default function CodeEditor({
   onRun,
   onStop,
   onClear,
-  onSave,
-  isLoggedIn
+  onSave
 }) {
   // Choose the proper language extension based on the selected language.
   const extensions = selectedLanguage === 'Python' ? [python()] : [cpp()];
@@ -58,15 +57,7 @@ export default function CodeEditor({
         >
           Clear
         </button>
-        <button
-          onClick={onSave}
-          className={`bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded ${
-            !isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          disabled={!isLoggedIn}
-        >
-          Save
-        </button>
+        
       </div>
 
       {/* CodeMirror Editor with a custom light theme */}

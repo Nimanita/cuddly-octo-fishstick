@@ -1,0 +1,32 @@
+# Use a lightweight Python image.
+FROM python:3.10-slim
+
+# Ensure output is unbuffered.
+ENV PYTHONUNBUFFERED=1
+
+# Set working directory.
+WORKDIR /app
+
+# Install system dependencies: build-essential, gcc, g++, and Node.js (for JavaScript execution)
+RUN apt-get update && \
+    apt-get install -y util-linux build-essential gcc g++ python3-dev curl && \
+    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+    
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy application code.
+COPY . .
+
+# (Optional) Collect static files if needed.
+RUN python manage.py collectstatic --noinput
+
+# Expose the port.
+EXPOSE 8000
+
+# Start the server with Daphne.
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "code_editor_backened.asgi:application"]
+
+

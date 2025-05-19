@@ -1,0 +1,16 @@
+
+# Dockerfile.executor
+FROM python:3.10-slim
+
+# Install necessary build tools, Node.js for JavaScript support, and the 'script' command from util-linux.
+RUN apt-get update && \
+    apt-get install -y util-linux build-essential gcc g++ curl && \
+    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install any required Python packages that your code executor might require.
+RUN pip install numpy matplotlib
+
+# Default command – typically overridden by your executor.
+CMD ["bash"]

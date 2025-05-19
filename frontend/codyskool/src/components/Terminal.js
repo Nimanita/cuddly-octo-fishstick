@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
-export default function Terminal({ title, content, setContent, isOutput, onClear }) {
+export default function Terminal({ title, output, input, setInput, onSendInput, onClear, prompt }) {
+  const outputRef = useRef(null);
+
+  // Auto-scroll whenever the output or prompt is updated
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [output, prompt]);
+
   return (
     <div className="border rounded bg-black text-white p-2 mb-4">
       <div className="flex justify-between items-center mb-2">
@@ -12,21 +21,46 @@ export default function Terminal({ title, content, setContent, isOutput, onClear
           Clear
         </button>
       </div>
-      {isOutput ? (
-        <div className="bg-gray-900 p-2 rounded h-32 overflow-y-auto">
-          <pre>{content}</pre>
-        </div>
-      ) : (
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="w-full h-16 p-2 border rounded focus:outline-none resize-none overflow-y-auto text-black bg-white"
-          placeholder="Enter input for your code..."
-          rows={3}  // This allows for multiple lines (Enter key will go to a new line).
-        />
-      )}
+      <div ref={outputRef} className="bg-gray-900 p-2 rounded h-64 overflow-y-auto font-mono">
+        <pre>{output}</pre>
+        {prompt && (
+          <div className="flex items-center">
+            <span></span>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onSendInput(input);
+                  setInput('');
+                }
+              }}
+              className="bg-transparent text-white outline-none ml-1 flex-1"
+              autoFocus
+              style={{ caretColor: 'white' }}
+            />
+            {/* Blinking cursor element */}
+            <span className="blinking-cursor ml-1">|</span>
+          </div>
+        )}
+      </div>
+      <style jsx>{`
+        .blinking-cursor {
+          animation: blink 1s step-start infinite;
+        }
+        @keyframes blink {
+          50% {
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
+
+
+
 
 

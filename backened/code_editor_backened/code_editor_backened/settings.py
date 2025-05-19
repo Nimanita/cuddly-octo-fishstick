@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'corsheaders',
-    
+    'channels',
     # Local apps
     'editor',
 ]
@@ -62,7 +62,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'code_editor_backened.wsgi.application'
-
+ASGI_APPLICATION = 'code_editor_backened.asgi:application'
 # Database
 DATABASES = {
     'default': {
@@ -130,3 +130,13 @@ CORS_ALLOWED_ORIGINS = [
 # Code execution settings
 MAX_EXECUTION_TIME = 10  # seconds
 MAX_MEMORY_USAGE = 100  # MB
+
+# Static files.
+STATIC_URL = '/static/'
+
+# Channels – using In-Memory channel layer for development. For production use Redis.
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    },
+}
