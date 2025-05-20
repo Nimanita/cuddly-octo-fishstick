@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-key-for-development-only-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['cuddly-octo-fishstick.onrender.com']
 
 # Application definition
 INSTALLED_APPS = [
