@@ -6,7 +6,7 @@ WORKDIR /app/frontend
 COPY frontend/codyskool/package*.json ./
 RUN npm ci
 
-# Copy the rest of the frontend source code including tailwind.config.js, postcss.config.js and all assets
+# Copy the rest of the frontend source code including tailwind.config.js, postcss.config.js, etc.
 COPY frontend/codyskool/ ./
 
 # Build the production version of your React app
@@ -19,35 +19,36 @@ ENV PYTHONUNBUFFERED=1
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies (you no longer need NodeJS here)
+# Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      util-linux build-essential gcc g++ python3-dev curl pkg-config && \
+        util-linux build-essential gcc g++ python3-dev curl pkg-config && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
-COPY backened/code_editor_backened/requirements.txt /app/requirements.txt
+# Create and activate virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies
+COPY backened/code_editor_backened/requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip && \
     pip install setuptools wheel && \
     grep -v "backports.zoneinfo" requirements.txt > requirements_filtered.txt || cp requirements.txt requirements_filtered.txt && \
     pip install -r requirements_filtered.txt && \
     pip install whitenoise daphne
 
-# Copy the Django app code into the image
+# Copy Django application code
 COPY backened/code_editor_backened /app/
 
-# Copy the pre-built React frontend from the previous stage
-# This places the built static files in the location referenced in settings.py
-COPY --from=frontend-build /app/frontend/codyskool/build /app/frontend/codyskool/build
+#  Corrected path: Copy built React static assets from frontend stage
+COPY --from=frontend-build /app/frontend/build /app/frontend/codyskool/build
 
-# Create directory for collected static files and run collectstatic
+# Prepare static files directory and run collectstatic
 RUN mkdir -p staticfiles && python manage.py collectstatic --noinput
 
-# Expose the port Render uses; using shell form for variable expansion
+# Expose the port used by Render (default: 8000)
 EXPOSE 8000
 
-# Start the Daphne ASGI server using a shell for env variable interpolation.
+# Start Daphne ASGI server
 CMD sh -c 'daphne -b 0.0.0.0 -p ${PORT:-8000} code_editor_backened.asgi:application'
