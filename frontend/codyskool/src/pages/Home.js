@@ -128,7 +128,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-yellow-50">
       <Navbar />
-      <div className="container mx-auto p-4 flex flex-col md:flex-row">
+      <div className="container mx-auto p-4  flex-col md:flex-row">
         <div className="flex-1">
           <CodeEditor
             code={code}
