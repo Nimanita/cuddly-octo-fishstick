@@ -49,7 +49,9 @@ ROOT_URLCONF = 'code_editor_backened.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'frontend/codyskool/build'),  # Add your React build directory here
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -61,7 +63,6 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = 'code_editor_backened.wsgi.application'
 ASGI_APPLICATION = 'code_editor_backened.asgi:application'
 # Database
