@@ -1,7 +1,5 @@
 CodySkool is an interactive online code execution environment similar to [online-python.com](https://www.online-python.com/), built with Django, React, WebSockets, and Docker. The application allows users to write, compile, and execute code in different programming languages within a web browser.
 
-![CodySkool Architecture](https://i.ibb.co/YL6BpHM/codyskool-architecture.png)
-
 ## Table of Contents
 - [Features](#features)
 - [System Architecture](#system-architecture)
